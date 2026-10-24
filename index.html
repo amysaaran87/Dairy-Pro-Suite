@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Dairy Pro Suite (DEMO)</title>
+    
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        :root {
+            --primary: #27ae60;
+            --secondary: #2c3e50;
+            --accent: #007bff;
+            --market: #e74c3c;
+            --bg-image: url('https://images.unsplash.com/photo-1500595046743-cd271d694d30?q=80&w=2070');
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+
+        body { 
+            font-family: -apple-system, sans-serif;
+            margin: 0; padding: 10px;
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), var(--bg-image);
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: #333;
+        }
+
+        /* Demo Notice Banner */
+        #demo-banner {
+            width: 100%; max-width: 500px; background: #e74c3c;
+            color: white; padding: 12px; border-radius: 10px; margin-bottom: 10px;
+            text-align: center; font-size: 0.8rem; font-weight: bold; box-sizing: border-box;
+        }
+        #demo-banner a { color: #fff; text-decoration: underline; }
+
+        .nav-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); gap: 8px;
+            margin-bottom: 15px; width: 100%; max-width: 500px;
+        }
+
+        .nav-btn {
+            padding: 12px 5px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer; font-weight: bold; font-size: 0.7rem; text-transform: uppercase;
+            background: rgba(0, 0, 0, 0.8); color: white;
+        }
+
+        .nav-btn.active { background: var(--primary); border-color: white; border-bottom: 3px solid white; }
+
+        .tab-content { display: none; width: 100%; max-width: 500px; }
+        .tab-content.active { display: block; }
+
+        .card { 
+            width: 100%; background: rgba(255, 255, 255, 0.98); 
+            padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); box-sizing: border-box;
+        }
+
+        h2 { text-align: center; color: var(--secondary); margin-top: 0; margin-bottom: 20px; font-size: 1.3rem; font-weight: 800; }
+        .field { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        label { display: block; font-weight: 900; margin-bottom: 4px; font-size: 0.7rem; color: #444; text-transform: uppercase; }
+        
+        .input-with-symbol { position: relative; display: flex; align-items: center; }
+        .input-with-symbol input { padding-right: 30px; }
+        .symbol-overlay { position: absolute; right: 10px; font-weight: bold; color: #777; pointer-events: none; }
+
+        input, select { 
+            width: 100%; padding: 10px; border: 2px solid #ccc; border-radius: 8px; 
+            box-sizing: border-box; font-size: 1rem; text-align: center; font-weight: bold;
+            background: white;
+        }
+
+        .btn-group { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 15px; }
+        button.calc-btn { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        button.reset-btn { width:100%; background: #bdc3c7; color: #2c3e50; border: none; border-radius: 10px; padding:10px; font-weight: bold; cursor: pointer; }
+
+        .output { margin-top: 15px; padding: 15px; background: #e8f5e9; border-radius: 10px; border: 2px solid var(--primary); text-align: center; }
+        .res-val { font-size: 1.8rem; color: #1b5e20; font-weight: 900; display: block; }
+
+        .history-container { max-height: 300px; overflow-y: auto; margin-top: 10px; }
+        .save-status { font-size: 0.65rem; color: #e74c3c; text-align: right; display: block; margin-top: 5px; font-weight: bold; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th { font-size: 0.7rem; text-transform: uppercase; text-align: left; padding: 5px; }
+        .footer-note { margin-top: 20px; color: rgba(255,255,255,0.7); font-size: 0.65rem; text-align: center; }
+    </style>
+</head>
+<body onload="initApp()">
+
+    <div id="demo-banner">
+        🔒 <b>DEMO MODE:</b> CSV Export & Shift Logging are locked. <a href="https://saaran2.gumroad.com/l/cbukjk" target="_blank">Get the full version &rarr;</a>
+    </div>
+
+    <div class="nav-container">
+        <button id="nav-adjuster" class="nav-btn active" onclick="openTab(event, 'adjuster')">Adjuster</button>
+        <button id="nav-pearson" class="nav-btn" onclick="openTab(event, 'pearson')">Pearson</button>
+        <button id="nav-multimix" class="nav-btn" onclick="openTab(event, 'multimix')">Multi-Mix</button>
+        <button id="nav-history" class="nav-btn" onclick="openTab(event, 'history')">Shift Log</button>
+    </div>
+
+    <div id="adjuster" class="tab-content active">
+        <div class="card">
+            <h2>Tank Fat Adjuster (Demo)</h2>
+            
+            <div class="field">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                    <div>
+                        <label>Tank</label>
+                        <select id="adj_tank">
+                            <option value="" selected disabled>-- Select Tank --</option>
+                            <option value="RC1">RC1</option>
+                            <option value="RC2">RC2</option>
+                            <option value="PC1">PC1</option>
+                            <option value="PC2">PC2</option>
+                            <option value="PC3">PC3</option>
+                            <option value="PC4">PC4</option>
+                            <option value="PC6">PC6</option>
+                            <option value="PC7">PC7</option>
+                            <option value="PC8">PC8</option>
+                            <option value="PC9">PC9</option>
+                            <option value="FM1">FM1</option>
+                            <option value="FM2">FM2</option>
+                            <option value="FM3 (INTERFACE)">FM3 (INTERFACE)</option>
+                            <option value="FM4">FM4</option>
+                            <option value="FM5">FM5</option>
+                            <option value="YM1">YM1</option>
+                            <option value="YM2">YM2</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Initials</label>
+                        <input type="text" id="adj_user" placeholder="XX" maxlength="3" style="text-transform: uppercase;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Product</label>
+                <select id="adj_prod">
+                    <option value="" selected disabled>-- Select Product --</option>
+                    <option value="Double 48%">Double 48%</option>
+                    <option value="Single 18%">Single 18%</option>
+                    <option value="Cream 16%">Cream 16%</option>
+                    <option value="Cream 35%">Cream 35%</option>
+                    <option value="Cream 38%">Cream 38%</option>
+                    <option value="Cream 40%">Cream 40%</option>
+                    <option value="Stab 28%">Stab 28%</option>
+                    <option value="Stab 31% (Snow)">Stab 31% (Snow)</option>
+                    <option value="Stab 31% (Pectin)">Stab 31% (Pectin)</option>
+                    <option value="Stab 32% ">Stab 32% </option>
+                    <option value="Stab 35% (Laurens)">Stab 35% (Laurens)</option>
+                    <option value="Stab 35% (Sweet PK)">Stab 35% (Sweet PK)</option>
+                    <option value="Stab 35% (0.2)">Stab 35% (0.2)</option>
+                    <option value="Stab 35% (Wrights)">Stab 35% (Wrights)</option>
+                    <option value="Homo">Homo</option>
+                    <option value="Semi-Skim">Semi-Skim</option>
+                    <option value="Skim">Skim</option> 
+                    <option value="Channel">Channel</option>
+                    <option value="Natural Yog VFF">Natural Yog VFF</option>
+                    <option value="Diet Bio Yog (Low Fat)">Diet Bio Yog (Low Fat)</option>
+                    <option value="Buttermilk">Buttermilk</option>
+                    <option value="Natural Yog 1%">Natural Yog 1%</option>
+                    <option value="Fromage Frais Low Fat">Fromage Frais Low Fat</option>
+                    <option value="Low Fat Yogurt KE">Low Fat Yogurt KE</option>
+                    <option value="NPD GC yogurt">NPD GC yogurt</option>
+                    <option value="Natural Yoghurt 3.5% /Bio Yoghurt 3.5%">Natural Yoghurt 3.5% /Bio Yoghurt 3.5%</option>
+                    <option value="Natural Yog 4%">Natural Yog 4%</option>
+                    <option value="Thick Greek Yog 10%">Thick Greek Yog 10%</option>
+                    <option value="Greek Style Yog">Greek Style Yog</option>
+                    <option value="Sour Cream 10%">Sour Cream 10%</option>
+                    <option value="Sour Cream 18% CL/ Crème Fraiche 18% CL">Sour Cream 18% CL/ Crème Fraiche 18% CL</option>
+                    <option value="Sour Cream 18% PB">Sour Cream 18% PB</option>
+                    <option value="Sour Cream 18% / Crème Fraiche 18%">Sour Cream 18% / Crème Fraiche 18%</option>
+                    <option value="Crème Fraiche 30%">Crème Fraiche 30%</option>
+                    <option value="Pumpable Soft Cheese 16% (pre brine)">Pumpable Soft Cheese 16% (pre brine)</option>
+                    <option value="Pumpable Soft Cheese 24% (Davisons /P)">Pumpable Soft Cheese 24% (Davisons /P)</option>
+                    <option value="Pumpable Soft Cheese 24% G (pre brine)">Pumpable Soft Cheese 24% G (pre brine)</option>
+                    <option value="Custard Best Ever">Custard Best Ever</option>
+                    <option value="Custard Chocolate B">Custard Chocolate B</option>
+                    <option value="Custard Reduced Sugar">Custard Reduced Sugar</option>
+                    <option value="Custard High Fibre">Custard High Fibre</option>
+                    <option value="Custard MS Trifle">Custard MS Trifle</option>
+                </select>
+            </div>
+            
+            <div class="field">
+                <label>Current Tank Volume & Fat</label>
+                <div class="input-with-symbol"><input type="number" id="v_tank" value="0"><span class="symbol-overlay">L</span></div>
+                <div class="input-with-symbol" style="margin-top:5px;"><input type="number" id="f_tank" value="0"><span class="symbol-overlay">%</span></div>
+            </div>
+
+            <div class="field">
+                <label>Add-In Fat %</label>
+                <div class="input-with-symbol"><input type="number" id="f_source" value="0"><span class="symbol-overlay">%</span></div>
+            </div>
+
+            <div class="field"><label>Target Fat (%)</label><input type="number" id="f_target" value="0"></div>
+            
+            <div class="btn-group">
+                <button id="btn_adj" class="calc-btn" onclick="calcAdjuster()">Calculate</button>
+                <button class="reset-btn" onclick="resetAdjuster()">Clear</button>
+            </div>
+            <div id="out_adj" class="output" style="display:none">
+                <small>REQUIRED ADDITION:</small>
+                <span id="res_adj" class="res-val">0.00</span><strong>Liters</strong>
+            </div>
+        </div>
+    </div>
+
+    <div id="pearson" class="tab-content">
+        <div class="card">
+            <h2>Pearson Square (Demo)</h2>
+            
+            <div class="field">
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                    <div>
+                        <label>Product Type</label>
+                        <select id="p_prod">
+                            <option value="" selected disabled>-- Select Product --</option>
+                            <option value="Double 48%">Double 48%</option>
+                            <option value="Single 18%">Single 18%</option>
+                            <option value="Cream 16%">Cream 16%</option>
+                            <option value="Cream 35%">Cream 35%</option>
+                            <option value="Cream 38%">Cream 38%</option>
+                            <option value="Cream 40%">Cream 40%</option>
+                            <option value="Stab 28%">Stab 28%</option>
+                            <option value="Stab 31% (Snow)">Stab 31% (Snow)</option>
+                            <option value="Stab 31% (Pectin)">Stab 31% (Pectin)</option>
+                            <option value="Stab 32% ">Stab 32% </option>
+                            <option value="Stab 35% (Laurens)">Stab 35% (Laurens)</option>
+                            <option value="Stab 35% (Sweet PK)">Stab 35% (Sweet PK)</option>
+                            <option value="Stab 35% (0.2)">Stab 35% (0.2)</option>
+                            <option value="Stab 35% (Wrights)">Stab 35% (Wrights)</option>
+                            <option value="Homo">Homo</option>
+                            <option value="Semi-Skim">Semi-Skim</option>
+                            <option value="Skim">Skim</option> 
+                            <option value="Channel">Channel</option> 
+                        </select>
+                    </div>
+                    <div>
+                        <label>Initials</label>
+                        <input type="text" id="p_user" placeholder="XX" maxlength="3" style="text-transform: uppercase;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label>High Fat Source (%)</label>
+                <input type="number" id="p_high" value="0">
+            </div>
+            <div class="field">
+                <label>Low Fat Source (%)</label>
+                <input type="number" id="p_low" value="0">
+            </div>
+            <div class="field"><label>Target Fat (%)</label><input type="number" id="p_target" value="0"></div>
+            <div class="field"><label>Total Batch (L)</label><input type="number" id="p_batch" value="0"></div>
+            <div class="btn-group">
+                <button id="btn_pea" class="calc-btn" onclick="calcPearson()">Calculate</button>
+                <button class="reset-btn" onclick="resetPearson()">Clear</button>
+            </div>
+            <div id="out_pea" class="output" style="display:none">
+                <div id="res_pea_text" class="res-val" style="font-size: 1.1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="multimix" class="tab-content">
+        <div class="card">
+            <h2>Multi-Mix (Demo)</h2>
+            <table>
+                <thead><tr><th>Fat %</th><th>Qty (L)</th></tr></thead>
+                <tbody id="multiBody"></tbody>
+            </table>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom:10px;">
+                <button class="reset-btn" style="background:var(--primary); color:white;" onclick="addRow()">+ Row</button>
+                <button class="reset-btn" style="background:var(--market); color:white;" onclick="removeRow()">- Row</button>
+            </div>
+            <button class="reset-btn" style="width:100%; background:var(--secondary); color:white;" onclick="resetMultiRows()">Reset (4 Rows)</button>
+            <div class="output">
+                <small>TOTAL VOL: <span id="m-total-qty">0 L</span></small><br>
+                <span id="m-final-fat" class="res-val">0.00%</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="history" class="tab-content">
+        <div class="card">
+            <h2>Shift Log (Locked in Demo)</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="calc-btn" style="background:#ccc; cursor:not-allowed;" onclick="alert('CSV Export is locked in the free demo. Purchase the full version to unlock shift logging and CSV exports!')">💾 Save As... (Locked)</button>
+                <button id="wipeBtn" class="reset-btn" style="background:#ccc; color:white; cursor:not-allowed;" disabled>🗑️ Wipe (Locked)</button>
+            </div>
+            <span class="save-status">LOCKED: UNLOCK IN FULL VERSION</span>
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+            <div style="padding: 15px; text-align: center; color: #666; font-size: 0.85rem;">
+                Shift logging and local storage history are restricted in this preview. <br><br>
+                <a href="https://saaran2.gumroad.com/l/cbukjk" target="_blank" style="color: var(--accent); font-weight: bold;">Click here to get the full unrestricted source code on Gumroad &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">Production Software Demo | <a href="https://saaran2.gumroad.com/l/cbukjk" target="_blank" style="color: #fff;">Buy Full Code</a></div>
+
+<script>
+    let deferredPrompt;
+
+    function openTab(evt, tabName) {
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        if(evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+    }
+
+    function setupArrowNav() {
+        document.addEventListener('keydown', function(e) {
+            if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+            const active = document.activeElement;
+            if (!active || (active.tagName !== 'INPUT' && active.tagName !== 'SELECT')) return;
+            if (active.type === 'number' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                e.preventDefault(); 
+            }
+            const currentTab = document.querySelector('.tab-content.active');
+            const inputs = Array.from(currentTab.querySelectorAll('input:not([type="hidden"]), select'));
+            const index = inputs.indexOf(active);
+            if (index === -1) return;
+            let nextIndex = (e.key === 'ArrowDown' || e.key === 'ArrowRight') ? index + 1 : index - 1;
+            if (nextIndex >= 0 && nextIndex < inputs.length) {
+                inputs[nextIndex].focus();
+                if(inputs[nextIndex].tagName === 'INPUT') inputs[nextIndex].select();
+            }
+        });
+    }
+
+    function setupAutoClear() {
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('wheel', function(e) { e.preventDefault(); }, { passive: false });
+            input.addEventListener('focus', function() { 
+                if (this.value == "0") this.value = ""; 
+                this.select();
+            });
+            input.addEventListener('blur', function() { 
+                if (this.value === "") this.value = "0"; 
+            });
+        });
+    }
+
+    function validateInputs() {
+        const adjUser = document.getElementById('adj_user').value.trim();
+        const adjTank = document.getElementById('adj_tank').value;
+        const adjProd = document.getElementById('adj_prod').value;
+        const adjBtn = document.getElementById('btn_adj');
+
+        if (adjUser.length >= 2 && adjTank !== "" && adjProd !== "") {
+            adjBtn.disabled = false;
+            adjBtn.style.background = "var(--accent)";
+            adjBtn.style.cursor = "pointer";
+        } else {
+            adjBtn.disabled = true;
+            adjBtn.style.background = "#ccc";
+            adjBtn.style.cursor = "not-allowed";
+        }
+
+        const peaUser = document.getElementById('p_user').value.trim();
+        const peaProd = document.getElementById('p_prod').value;
+        const peaBtn = document.getElementById('btn_pea');
+
+        if (peaUser.length >= 2 && peaProd !== "") {
+            peaBtn.disabled = false;
+            peaBtn.style.background = "var(--accent)";
+            peaBtn.style.cursor = "pointer";
+        } else {
+            peaBtn.disabled = true;
+            peaBtn.style.background = "#ccc";
+            peaBtn.style.cursor = "not-allowed";
+        }
+    }
+
+    function calcAdjuster() {
+        const v = parseFloat(document.getElementById('v_tank').value) || 0;
+        const f_tank = parseFloat(document.getElementById('f_tank').value) || 0;
+        const f_target = parseFloat(document.getElementById('f_target').value) || 0;
+        const f_source = parseFloat(document.getElementById('f_source').value) || 0;
+        if (v === 0 || (f_source - f_target) === 0) return alert("Check Volume/Source Fat");
+        const res = (v * (f_target - f_tank)) / (f_source - f_target);
+        document.getElementById('out_adj').style.display = "block";
+        document.getElementById('res_adj').innerText = Math.abs(res).toFixed(2);
+    }
+
+    function calcPearson() {
+        const h = parseFloat(document.getElementById('p_high').value), 
+              l = parseFloat(document.getElementById('p_low').value), 
+              t = parseFloat(document.getElementById('p_target').value), 
+              b = parseFloat(document.getElementById('p_batch').value);
+        if ((h - l) === 0) return alert("Check values.");
+        const highParts = Math.abs(t - l);
+        const lowParts = Math.abs(h - t);
+        const totalParts = highParts + lowParts;
+        const highLiters = ((highParts / totalParts) * b).toFixed(2);
+        const lowLiters = ((lowParts / totalParts) * b).toFixed(2);
+        document.getElementById('out_pea').style.display = "block";
+        document.getElementById('res_pea_text').innerHTML = `High: ${highLiters}L <br> Low: ${lowLiters}L`;
+    }
+
+    function calculateMultiMix() {
+        const fats = document.querySelectorAll('.fat'), qtys = document.querySelectorAll('.qty');
+        let w = 0, v = 0;
+        fats.forEach((f, i) => { 
+            const q = parseFloat(qtys[i].value)||0; 
+            w += (parseFloat(f.value)||0)*q; 
+            v += q; 
+        });
+        document.getElementById('m-total-qty').innerText = v + " L";
+        document.getElementById('m-final-fat').innerText = (v > 0 ? (w/v) : 0).toFixed(2) + '%';
+    }
+
+    function addRow() {
+        const r = document.createElement('tr');
+        r.innerHTML = `<td><input type="number" class="fat" value="0" oninput="calculateMultiMix()"></td><td><input type="number" class="qty" value="0" oninput="calculateMultiMix()"></td>`;
+        document.getElementById('multiBody').appendChild(r);
+        setupAutoClear(); 
+    }
+
+    function removeRow() {
+        const body = document.getElementById('multiBody');
+        if (body.rows.length > 1) body.deleteRow(-1);
+        calculateMultiMix();
+    }
+
+    function resetMultiRows() {
+        document.getElementById('multiBody').innerHTML = "";
+        for(let i=0; i<4; i++) addRow();
+        calculateMultiMix();
+    }
+
+    function resetAdjuster() {
+        ['v_tank', 'f_tank', 'f_source', 'f_target'].forEach(id => document.getElementById(id).value = 0);
+        document.getElementById('adj_user').value = "";
+        document.getElementById('adj_tank').selectedIndex = 0;
+        document.getElementById('adj_prod').selectedIndex = 0;
+        document.getElementById('out_adj').style.display = "none";
+        validateInputs();
+    }
+
+    function resetPearson() {
+        ['p_high', 'p_low', 'p_target', 'p_batch'].forEach(id => document.getElementById(id).value = 0);
+        document.getElementById('p_user').value = "";
+        document.getElementById('p_prod').selectedIndex = 0;
+        document.getElementById('out_pea').style.display = "none";
+        validateInputs();
+    }
+
+    function initApp() {
+        resetMultiRows();
+        setupAutoClear();
+        setupArrowNav();
+        ['adj_user', 'adj_tank', 'adj_prod', 'p_user', 'p_prod'].forEach(id => {
+            document.getElementById(id).addEventListener('input', validateInputs);
+            document.getElementById(id).addEventListener('change', validateInputs);
+        });
+        validateInputs();
+    }
+</script>
+</body>
+</html>
