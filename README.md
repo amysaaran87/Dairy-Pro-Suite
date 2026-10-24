@@ -2,7 +2,7 @@
 
 A live interactive demo of **Dairy Pro Suite**—a lightweight, offline-capable Progressive Web App (PWA) designed for fluid blending, tank fat adjustments, and batch calculations.
 
-🔗 **[View Live Demo](https://yourusername.github.io/repository-name/)**  
+🔗 **[View Live Demo](https://amysaaran87.github.io/Dairy-Pro-Suite/)**  
 🛒 **[Get the Full Unrestricted Version on Gumroad](https://saaran2.gumroad.com/l/cbukjk)**
 
 ---
